@@ -1,0 +1,27 @@
+#include "syscall.h"
+#include "copyright.h"
+
+void input(int a[], int n)
+{
+	int i = 0;
+	for (; i < n; i++)
+	{
+		a[i] = ReadInt();
+	}
+}
+
+void output(int a[], int n)
+{
+	int i = 0;
+	for (; i < n; i++)
+	{
+		PrintInt(a[i]);
+	}
+}
+
+int main()
+{
+	int n ;
+	ReadInt();
+	PrintInt(5);
+}
