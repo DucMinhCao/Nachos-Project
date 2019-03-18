@@ -47,6 +47,8 @@
 //	"which" is the kind of exception.  The list of possible exceptions 
 //	are in machine.h.
 //----------------------------------------------------------------------
+
+//hau het da viet trong report het roi => doc o report
 void IncreasePC()
 {
 	int counter = machine->ReadRegister(PCReg);
@@ -150,15 +152,18 @@ ExceptionHandler(ExceptionType which)
 				break;
 			case SC_ReadInt:
 				{
+					// Input: K co
+                    			// Output: Tra ve so nguyen doc duoc tu man hinh console.
+                    			// Chuc nang: Doc so nguyen tu man hinh console.
 					int number = 0;
 					int nDigit = 0;
 					int i;
 					char *buffer = new char[255];
-					nDigit = gSynchConsole->Read(buffer, 255);
+					nDigit = gSynchConsole->Read(buffer, 255); //so ky tu doc duoc
 					i = (buffer[0] == '-') ? 1 : 0;
 					for (;i < nDigit; i++)
 					{
-						if(buffer[i] == '.')
+						if(buffer[i] == '.') //50.00000000 van la so nguyen
 						{
 							int j = i + 1;
 							for (;j < nDigit; j++)
@@ -174,6 +179,7 @@ ExceptionHandler(ExceptionType which)
 						else if (buffer[i] < '0' || buffer[i] > '9')
 						{
 							printf("Invalid Input !! Please Input Integer Number.");
+							machine->WriteRegister(2, 0);
 							IncreasePC();
 							return;
 							
@@ -187,6 +193,9 @@ ExceptionHandler(ExceptionType which)
 				break;
 			case SC_PrintInt:
 				{
+					// Input: mot so integer
+                    			// Output: khong co 
+                    			// Chuc nang: In so nguyen len man hinh console
 					int number = machine->ReadRegister(4);
 					char *buffer;
 					buffer = new char[256];
@@ -238,6 +247,9 @@ ExceptionHandler(ExceptionType which)
 				break;
 			case SC_ReadChar:
 				{	
+					//Input: Khong co
+					//Output: Duy nhat 1 ky tu (char)
+					//Cong dung: Doc mot ky tu tu nguoi dung nhap
 					char *character = new char[255];
 					int nChar = gSynchConsole->Read(character,255);
 
@@ -263,12 +275,18 @@ ExceptionHandler(ExceptionType which)
 				//break;
 			case SC_PrintChar: 
 				{
+					// Input: Ki tu(char)
+					// Output: Ki tu(char)
+					// Cong dung: Xuat mot ki tu la tham so arg ra man hinh
 					char c = (char) machine->ReadRegister(4);
 					gSynchConsole->Write(&c,1);
 				}
 				break;
 			case SC_ReadString:
 				{
+					// Input: Buffer(char*), do dai toi da cua chuoi nhap vao(int)
+					// Output: Khong co
+					// Cong dung: Doc vao mot chuoi voi tham so la buffer va do dai toi da
 					char *res;
 					int userAdd = machine->ReadRegister(4);
 					int length = machine->ReadRegister(5);
@@ -280,6 +298,9 @@ ExceptionHandler(ExceptionType which)
 				break;
 			case SC_PrintString:
 				{
+					// Input: Buffer(char*)
+					// Output: Chuoi doc duoc tu buffer(char*)
+					// Cong dung: Xuat mot chuoi la tham so buffer truyen vao ra man hinh
 					int virtAddr, length = 0;
 					char *res;
 					virtAddr = machine->ReadRegister(4);

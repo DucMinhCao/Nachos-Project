@@ -35,7 +35,7 @@ CPP = gcc -E
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
-all: halt shell matmult sort add readint printint printchar readchar readstring printstring test text vailon
+all: halt shell matmult sort add readint printint printchar readchar readstring printstring text mysort help
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.c > strt.s
@@ -108,11 +108,11 @@ printstring: readstring.o printstring.o
 	$(LD) $(LDFLAGS) start.o printstring.o -o printstring.coff
 	../bin/coff2noff printstring.coff printstring
 
-test.o: test.c
-	$(CC) $(CFLAGS) -c test.c
-test: test.o test.o
-	$(LD) $(LDFLAGS) start.o test.o -o test.coff
-	../bin/coff2noff test.coff test
+help.o: help.c
+	$(CC) $(CFLAGS) -c help.c
+help: help.o help.o
+	$(LD) $(LDFLAGS) start.o help.o -o help.coff
+	../bin/coff2noff help.coff help
 
 text.o: text.c
 	$(CC) $(CFLAGS) -c text.c
@@ -120,8 +120,8 @@ text: text.o text.o
 	$(LD) $(LDFLAGS) start.o text.o -o text.coff
 	../bin/coff2noff text.coff text
 
-vailon.o: vailon.c
-	$(CC) $(CFLAGS) -c vailon.c
-vailon: vailon.o vailon.o
-	$(LD) $(LDFLAGS) start.o vailon.o -o vailon.coff
-	../bin/coff2noff vailon.coff vailon
+mysort.o: mysort.c
+	$(CC) $(CFLAGS) -c mysort.c
+mysort: mysort.o mysort.o
+	$(LD) $(LDFLAGS) start.o mysort.o -o mysort.coff
+	../bin/coff2noff mysort.coff mysort
