@@ -1,0 +1,9 @@
+#include "syscall.h"
+
+int main()
+{
+	char *fileName;
+	PrintString("Moi ban nhap vao filename : ");
+	ReadString(fileName, 255);
+	CreateFile(fileName);
+}

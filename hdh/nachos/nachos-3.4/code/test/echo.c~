@@ -1,0 +1,7 @@
+#include "syscall.h"
+
+int main()
+{
+	PrintString("cai lon");
+	return 0;
+}

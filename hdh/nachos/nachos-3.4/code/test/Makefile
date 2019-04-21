@@ -35,7 +35,7 @@ CPP = gcc -E
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
-all: halt shell matmult sort add readint printint printchar readchar readstring printstring text mysort help
+all: halt shell matmult sort add readint printint printchar readchar readstring printstring text mysort help taofile mofile echo cat copy reverse append kiemtra
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.c > strt.s
@@ -125,3 +125,51 @@ mysort.o: mysort.c
 mysort: mysort.o mysort.o
 	$(LD) $(LDFLAGS) start.o mysort.o -o mysort.coff
 	../bin/coff2noff mysort.coff mysort
+
+taofile.o: taofile.c
+	$(CC) $(CFLAGS) -c taofile.c
+taofile: taofile.o taofile.o
+	$(LD) $(LDFLAGS) start.o taofile.o -o taofile.coff
+	../bin/coff2noff taofile.coff taofile
+
+mofile.o: mofile.c
+	$(CC) $(CFLAGS) -c mofile.c
+mofile: mofile.o mofile.o
+	$(LD) $(LDFLAGS) start.o mofile.o -o mofile.coff
+	../bin/coff2noff mofile.coff mofile
+
+echo.o: echo.c
+	$(CC) $(CFLAGS) -c echo.c
+echo: echo.o echo.o
+	$(LD) $(LDFLAGS) start.o echo.o -o echo.coff
+	../bin/coff2noff echo.coff echo
+
+cat.o: cat.c
+	$(CC) $(CFLAGS) -c cat.c
+cat: cat.o cat.o
+	$(LD) $(LDFLAGS) start.o cat.o -o cat.coff
+	../bin/coff2noff cat.coff cat
+
+copy.o: copy.c
+	$(CC) $(CFLAGS) -c copy.c
+copy: copy.o copy.o
+	$(LD) $(LDFLAGS) start.o copy.o -o copy.coff
+	../bin/coff2noff copy.coff copy
+
+reverse.o: reverse.c
+	$(CC) $(CFLAGS) -c reverse.c
+reverse: reverse.o reverse.o
+	$(LD) $(LDFLAGS) start.o reverse.o -o reverse.coff
+	../bin/coff2noff reverse.coff reverse
+
+append.o: append.c
+	$(CC) $(CFLAGS) -c append.c
+append: append.o append.o
+	$(LD) $(LDFLAGS) start.o append.o -o append.coff
+	../bin/coff2noff append.coff append
+
+kiemtra.o: kiemtra.c
+	$(CC) $(CFLAGS) -c kiemtra.c
+kiemtra: kiemtra.o kiemtra.o
+	$(LD) $(LDFLAGS) start.o kiemtra.o -o kiemtra.coff
+	../bin/coff2noff kiemtra.coff kiemtra

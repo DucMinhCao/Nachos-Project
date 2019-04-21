@@ -24,7 +24,9 @@
 #include "copyright.h"
 #include "system.h"
 #include "syscall.h"
+#include "filesys.h"
 
+#define MaxFileLength 255
 //----------------------------------------------------------------------
 // ExceptionHandler
 // 	Entry point into the Nachos kernel.  Called when a user program
@@ -312,8 +314,255 @@ ExceptionHandler(ExceptionType which)
 					gSynchConsole->Write(res, length + 1);
 					delete res;
 				}
-			IncreasePC();
-			return;
+				break;
+			case SC_CreateFile:
+				{
+					int virtAddr;
+					char *fileName;
+
+					virtAddr = machine->ReadRegister(4);
+					fileName = User2System(virtAddr, MaxFileLength + 1);
+
+					if (strlen(fileName) == 0)
+					{
+						printf("File name is not valid");
+						machine->WriteRegister(2, -1);
+						IncreasePC();
+						return;
+					}
+
+					if (fileName == NULL)
+					{
+						printf("Not enough memory in system");
+						machine->WriteRegister(2, -1);
+						IncreasePC();
+						return;
+					}
+					
+					if (!fileSystem->Create(fileName, 0))
+					{
+						printf("File Create Failed");
+						machine->WriteRegister(2, -1);
+						delete[] fileName;
+						IncreasePC();
+						return;
+					}
+					
+					printf("File Create Success");
+					machine->WriteRegister(2, 0);
+					delete[] fileName;
+				}
+				break;
+			case SC_Open:
+				{
+					int virtAddr = machine->ReadRegister(4);
+					int type = machine->ReadRegister(5);
+					char *fileName;
+					fileName = User2System(virtAddr, MaxFileLength);
+
+					int freeSlot = fileSystem->FindFreeSlot();
+					if (freeSlot != -1)
+					{
+						if (type == 0 || type == 1)
+						{
+							if ((fileSystem->openf[freeSlot] = fileSystem->Open(fileName, type)) != NULL)
+							{
+								machine->WriteRegister(2, freeSlot); //tra ve OpenFileID
+							}
+
+						}
+						else if (type == 2)
+						{
+							printf("Stdin mode");
+							machine->WriteRegister(2,0);
+						} else 
+						{
+							printf("Stdout mode");
+							machine->WriteRegister(2,1);
+						}
+						delete[] fileName;
+						break;
+					}
+					machine->WriteRegister(2, -1); // k mo duoc file
+					delete[] fileName;
+				}
+				break;
+			case SC_Close:
+				{
+					int fileID = machine->ReadRegister(4);
+					if (fileID >= 0 && fileID <= 9)
+					{
+						if(fileSystem->openf[fileID])
+						{
+							delete fileSystem->openf[fileID];
+							fileSystem->openf[fileID] = NULL;
+							machine->WriteRegister(2, 0);
+							break;
+						}
+					}
+					machine->WriteRegister(2, -1);
+				}
+				break;
+			case SC_Read:
+				{
+					int virtAddr = machine->ReadRegister(4);
+					int charcount = machine->ReadRegister(5);
+					int id = machine->ReadRegister(6);
+					
+					int before;
+					int after;
+					char *buf;
+
+					if (id < 0 || id > 9)
+					{
+						printf("File ID invalid");
+						machine->WriteRegister(2, -1);
+						IncreasePC();
+						return;
+					}
+
+					if (fileSystem->openf[id] == NULL)
+					{
+						printf("Khong the read vi file nay k ton tai");
+						machine->WriteRegister(2, -1);
+						IncreasePC();
+						return;
+					}
+
+					if (fileSystem->openf[id]->type == 3)
+					{
+						printf("Khong the doc file stdout");
+						machine->WriteRegister(2, -1);
+						IncreasePC();
+						return;
+					}
+
+					before = fileSystem->openf[id]->GetCurrentPos();
+					buf = User2System(virtAddr, charcount);
+					if (fileSystem->openf[id]->type == 2) // doc file stdin
+					{
+						int size = gSynchConsole->Read(buf, charcount);
+						System2User(virtAddr, size, buf);
+						machine->WriteRegister(2, size);
+						delete buf;
+						IncreasePC();
+						return;
+					}
+					if ((fileSystem->openf[id]->Read(buf, charcount)) > 0)
+					{
+						after = fileSystem->openf[id]->GetCurrentPos();
+						System2User(virtAddr, charcount, buf);
+						machine->WriteRegister(2, after - before + 1);
+					} else {
+						machine->WriteRegister(2, -2);
+					}
+					delete buf;
+				}
+				break;
+			case SC_Write:
+				{
+					int virtAddr = machine->ReadRegister(4);
+					int charcount = machine->ReadRegister(5);
+					int id = machine->ReadRegister(6);
+					int before;
+					int after;
+					char* buf;					
+				
+					if (id < 0 || id > 9)
+					{
+						printf("Invalid file id");
+						machine->WriteRegister(2, -1);
+						IncreasePC();
+						return;
+					}
+					if (fileSystem->openf[id] == NULL)
+					{
+						printf("Khong the write vi file k ton tai");
+						machine->WriteRegister(2, -1);
+						IncreasePC();
+						return;
+					}
+					if (fileSystem->openf[id]->type == 1 || fileSystem->openf[id]->type == 2)
+					{
+						printf("File Only Read Hoac File Stdin");
+						machine->WriteRegister(2, -1);
+						IncreasePC();
+						return;
+					}
+					before = fileSystem->openf[id]->GetCurrentPos();
+					buf = User2System(virtAddr, charcount);
+					if (fileSystem->openf[id]->type == 0)
+					{
+						if ((fileSystem->openf[id]->Write(buf, charcount)) > 0)
+						{
+							after = fileSystem->openf[id]->GetCurrentPos();
+							machine->WriteRegister(2, after - before);
+							delete buf;
+							IncreasePC();
+							return;
+						}
+					}
+					if (fileSystem->openf[id]->type == 3)
+					{
+						int i = 0;
+						while (buf[i] != 0 && buf[i] != '\n')
+						{
+							gSynchConsole->Write(buf + i, 1);
+							i++;
+						}
+						buf[i] = '\n';
+						gSynchConsole->Write(buf + i, 1);
+						machine->WriteRegister(2, i-1);
+						delete[] buf;
+						IncreasePC();
+						return;
+					}
+				}
+				break;
+			case SC_Seek:
+				{
+					int pos = machine->ReadRegister(4); // Lay vi tri can chuyen con tro den trong file
+					int id = machine->ReadRegister(5); // Lay id cua file
+					// Kiem tra id cua file truyen vao co nam ngoai bang mo ta file khong
+					if (id < 0 || id > 9)
+					{
+						printf("\nKhong the seek vi id nam ngoai bang mo ta file.");
+						machine->WriteRegister(2, -1);
+						IncreasePC();
+						return;
+					}
+					// Kiem tra file co ton tai khong
+					if (fileSystem->openf[id] == NULL)
+					{
+						printf("\nKhong the seek vi file nay khong ton tai.");
+						machine->WriteRegister(2, -1);
+						IncreasePC();
+						return;
+					}
+					// Kiem tra co goi Seek tren console khong
+					if (id == 0 || id == 1)
+					{
+						printf("\nKhong the seek tren file console.");
+						machine->WriteRegister(2, -1);
+						IncreasePC();
+						return;
+					}
+					// Neu pos = -1 thi gan pos = Length nguoc lai thi giu nguyen pos
+					pos = (pos == -1) ? fileSystem->openf[id]->Length() : pos;
+					if (pos > fileSystem->openf[id]->Length() || pos < 0) // Kiem tra lai vi tri pos co hop le khong
+					{
+						printf("\nKhong the seek file den vi tri nay.");
+						machine->WriteRegister(2, -1);
+					}
+					else
+					{
+						// Neu hop le thi tra ve vi tri di chuyen thuc su trong file
+						fileSystem->openf[id]->Seek(pos);
+						machine->WriteRegister(2, pos);
+					}
+					IncreasePC();
+				}
+				break;
 		}
 	IncreasePC();
     }

@@ -2,5 +2,7 @@
 
 int main()
 {
-	PrintString("minh duc dep trai");
+	string tmp;
+	ReadString(tmp,100);
+	PrintString(tmp);
 }
